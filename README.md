@@ -95,3 +95,10 @@ grow large, that's governed by the host's normal `journald` retention
 ## License
 
 MIT — see `LICENSE`. No derivation from Tari core source.
+
+## Fleet rollout
+
+This tool is intended to be deployed identically across every Tari
+base_node in the fleet — install steps above are copy-paste safe for that
+purpose. No per-node customization is required beyond `TARI_LOG_PATH` for
+nodes running a non-default network/install layout.
