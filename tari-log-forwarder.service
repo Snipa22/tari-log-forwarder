@@ -1,5 +1,5 @@
 [Unit]
-Description=Tari base_node base_layer.log to systemd journal forwarder
+Description=Tari base_node log forwarder (all base_node log files to systemd journal)
 Documentation=https://github.com/Snipa22/tari-log-forwarder
 After=network.target tari.service
 
@@ -7,15 +7,18 @@ After=network.target tari.service
 Type=simple
 User=tari
 Group=tari
-Environment=TARI_LOG_PATH=/home/tari/.tari/mainnet/log/base_node/base_layer.log
+Environment=TARI_LOG_DIR=/home/tari/.tari/mainnet/log/base_node
 ExecStart=/usr/local/bin/tari-log-forwarder.sh
 Restart=always
 RestartSec=2
 
-# Default KillMode=control-group applies here: on stop/restart, systemd
-# signals every process in the unit's cgroup (the script, the `tail -F`
-# child, and any in-flight `logger` child), so no tail process is ever
-# left running behind a stopped/restarted service.
+# tari-log-forwarder.sh traps SIGTERM/SIGINT itself and explicitly kills
+# every backgrounded tail/logger pipeline it spawned (see script comments),
+# so shutdown is clean even outside systemd. Default KillMode=control-group
+# also applies here as a second line of defense: on stop/restart, systemd
+# signals every process left in the unit's cgroup, so nothing from any of
+# the five tail -F / logger pipelines is ever left running behind a
+# stopped/restarted service.
 
 [Install]
 WantedBy=multi-user.target
