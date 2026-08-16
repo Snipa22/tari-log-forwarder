@@ -22,13 +22,23 @@ jobs:
 
       - name: Validate systemd unit
         run: |
+          # `systemd-analyze verify` requires ExecStart's target binary to
+          # exist on-disk at the exact path in the unit (it resolves and
+          # checks the executable) — that's a real fleet-node path
+          # (/usr/local/bin/tari-log-forwarder.sh), not something present on
+          # a CI runner, so a strict `verify` here would fail for reasons
+          # unrelated to unit-file correctness. Point ExecStart at this
+          # checkout's copy of the script for the verify pass instead, then
+          # always run structural sanity checks on the real file too.
           if command -v systemd-analyze >/dev/null 2>&1; then
-            systemd-analyze verify ./tari-log-forwarder.service
+            sed "s#/usr/local/bin/tari-log-forwarder.sh#$(pwd)/tari-log-forwarder.sh#" \
+              tari-log-forwarder.service > /tmp/tari-log-forwarder.service
+            systemd-analyze verify /tmp/tari-log-forwarder.service
           else
-            echo "systemd-analyze not available on this runner; falling back to structural sanity checks"
-            test -f tari-log-forwarder.service
-            grep -q '^\[Unit\]' tari-log-forwarder.service
-            grep -q '^\[Service\]' tari-log-forwarder.service
-            grep -q '^\[Install\]' tari-log-forwarder.service
-            grep -q '^ExecStart=' tari-log-forwarder.service
+            echo "systemd-analyze not available on this runner; structural checks only"
           fi
+          test -f tari-log-forwarder.service
+          grep -q '^\[Unit\]' tari-log-forwarder.service
+          grep -q '^\[Service\]' tari-log-forwarder.service
+          grep -q '^\[Install\]' tari-log-forwarder.service
+          grep -q '^ExecStart=' tari-log-forwarder.service
